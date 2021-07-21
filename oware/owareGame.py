@@ -9,6 +9,9 @@ class owareGame():
         # return initial board (numpy board)
         b = Board()
         return b
+    
+    def getCanonicalForm(self, board, player):
+        return self.getPlayerBoard(board, player)
 
     def getPlayerBoard(self, board, player):
         if player == -1:
@@ -34,6 +37,9 @@ class owareGame():
         if board.point[1] >= 25:
             return -1
         return 0
+
+    def getActionSize(self):
+        return 6
     
     def getSymmetries(self, board, pi):
         l = [[board, pi]]

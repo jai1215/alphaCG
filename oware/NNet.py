@@ -15,11 +15,11 @@ from .owareNNet import owareNNet as ownet
 
 args = dotdict({
     'lr': 0.001,
-    'dropout': 0.3,
-    'epochs': 10,
+    'dropout': 0.1,
+    'epochs': 20,
     'batch_size': 64,
     'cuda': torch.cuda.is_available(),
-    'num_channels': 64,
+    'num_channels': 128,
 })
 
 class NNetWrapper():

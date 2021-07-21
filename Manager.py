@@ -22,6 +22,7 @@ class Manager():
         self.trainHistory = []  # history of examples from args.numItersForTrainExamplesHistory latest iterations
         self.pnet = self.nnet.__class__(self.game)  # the competitor network
         self.mcts = MCTS(self.game, self.nnet, self.args)
+        self.skipFirstSelfPlay = False  # can be overriden in loadTrainExamples()
 
     def saveTrainExamples(self, iteration):
         folder = self.args.checkpoint
@@ -36,14 +37,15 @@ class Manager():
     def executeEpisode(self):
         trainSample = []
         board = self.game.getInitBoard()
-        self.curPlayer = -1
+        self.curPlayer = 1
         #Cur Player
-        #episodeStep
+        episodeStep = 0
 
         while True:
+            episodeStep += 1
             playerBoard = self.game.getPlayerBoard(board, self.curPlayer)
-            #temp
-            pi = self.mcts.getActionProb(playerBoard, temp=0)
+            temp = int(episodeStep < self.args.tempThreshold)
+            pi = self.mcts.getActionProb(playerBoard, temp=temp)
             sym = self.game.getSymmetries(playerBoard, pi)
             for b, p in sym:
                 trainSample.append([b, self.curPlayer, p, None])
@@ -60,7 +62,6 @@ class Manager():
             board = next_board
     
     def learn(self):
-        np.random.seed(1)
         for i in range(self.args['numIters']):
             log.info("Start Iteration %d" % i)
 
@@ -89,9 +90,14 @@ class Manager():
             pmcts = MCTS(self.game, self.pnet, self.args)
 
             self.nnet.train(trainExamples)
+            # self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='test.pth.tar')
             nmcts = MCTS(self.game, self.nnet, self.args)
 
             log.info('PITTING AGAINST PREVIOUS VERSION')
+            # self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='test.pth.tar')
+            # self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+            # pmcts = MCTS(self.game, self.pnet, self.args)
+            # nmcts = MCTS(self.game, self.nnet, self.args)
             arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
                           lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
             pwins, nwins, draws = arena.playGames(self.args.arenaCompare)

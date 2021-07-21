@@ -25,17 +25,20 @@ class owareNNet(nn.Module):
         self.fc2 = nn.Linear(64, args.num_channels)
         self.fc_bn2 = nn.BatchNorm1d(args.num_channels)
         
-        self.fc3 = nn.Linear(args.num_channels, args.num_channels)
-        self.fc_bn3 = nn.BatchNorm1d(args.num_channels)
+        self.fc3 = nn.Linear(args.num_channels, 512)
+        self.fc_bn3 = nn.BatchNorm1d(512)
         
-        self.fc4 = nn.Linear(args.num_channels, args.num_channels)
-        self.fc_bn4 = nn.BatchNorm1d(args.num_channels)
+        self.fc4 = nn.Linear(512, 1024)
+        self.fc_bn4 = nn.BatchNorm1d(1024)
         
-        self.fc5 = nn.Linear(args.num_channels, args.num_channels)
-        self.fc_bn5 = nn.BatchNorm1d(args.num_channels)
+        self.fc5 = nn.Linear(1024, 256)
+        self.fc_bn5 = nn.BatchNorm1d(256)
 
-        self.fc_pi = nn.Linear(args.num_channels, self.action_size)
-        self.fc_v = nn.Linear(args.num_channels, 1)
+        self.fc_pi1    = nn.Linear(256, args.num_channels)
+        self.fc_pi_bn1 = nn.BatchNorm1d(args.num_channels)
+        self.fc_pi2    = nn.Linear(args.num_channels, self.action_size)
+
+        self.fc_v = nn.Linear(256, 1)
 
     def forward(self, s):
         #                                                           s: batch_size x board_x x board_y
@@ -48,7 +51,8 @@ class owareNNet(nn.Module):
         s = F.dropout(F.relu(self.fc_bn4(self.fc4(s))), p=self.args.dropout, training=self.training)  # batch_size x 512
         s = F.dropout(F.relu(self.fc_bn5(self.fc5(s))), p=self.args.dropout, training=self.training)  # batch_size x 512
 
-        pi = self.fc_pi(s)                                                                         # batch_size x action_size
+        pi = F.dropout(F.relu(self.fc_pi_bn1(self.fc_pi1(s))), p=self.args.dropout, training=self.training)                                                                         # batch_size x action_size
+        pi = self.fc_pi2(pi)                                                                         # batch_size x action_size
         v = self.fc_v(s)                                                                          # batch_size x 1
 
         return F.log_softmax(pi, dim=1), torch.tanh(v)
